@@ -18,8 +18,15 @@ namespace SamplePollyRefit.Controllers
         [HttpGet("users/{userName}")]
         public async Task<IActionResult> GetUser(string userName)
         {
-            var result = await _gitHubApiService.GetUser(userName);
-            return Ok(result);
+            try
+            {
+                var result = await _gitHubApiService.GetUser(userName);
+                return Ok(result);
+            }
+            catch
+            {
+                return BadRequest();
+            }
         }
 
         [HttpGet("users/{userName}/repos")]

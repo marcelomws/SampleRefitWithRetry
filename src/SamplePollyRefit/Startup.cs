@@ -1,18 +1,13 @@
-using System;
-using System.Net;
-using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Polly;
-using Refit;
 using SamplePollyRefit.Configuration;
+using SamplePollyRefit.Extensions;
 using SamplePollyRefit.Services.GitHubApi;
 using SamplePollyRefit.Services.Handlers;
-using Serilog;
 
 namespace SamplePollyRefit
 {
@@ -27,12 +22,11 @@ namespace SamplePollyRefit
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<HttpClientLogHandler>();
+            services.AddTransient<HttpClientLogHandler>();
             services.Configure<GitHubApiConfiguration>(Configuration.GetSection("GitHubApi"));
 
-            var apiGitHubConfiguration = Configuration.GetSection("GitHubApi").Get<GitHubApiConfiguration>();
-
-            ConfigureApi<IGitHubApiService>(services, apiGitHubConfiguration);
+            // Passar enableCaosEnginnering = true para habilitar simulação de falhas no retry police
+            services.AddExternalServiceClient<IGitHubApiService>(Configuration, enableCaosEnginnering: true);
 
             services.AddControllers();
 
@@ -60,36 +54,5 @@ namespace SamplePollyRefit
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
 
-        private void ConfigureApi<T>(IServiceCollection services, IApiConfiguration apiConfiguration) where T : class
-        {
-            var serviceBuilder = services.AddRefitClient<T>(new RefitSettings
-            {
-                HttpMessageHandlerFactory = () => new HttpClientHandler
-                {
-                    UseCookies = false,
-                    AutomaticDecompression = DecompressionMethods.GZip
-                }
-            });
-
-            serviceBuilder.ConfigureHttpClient(c => {
-                c.BaseAddress = new Uri(apiConfiguration.BaseUrl);
-                c.Timeout = TimeSpan.FromMilliseconds(apiConfiguration.TimeoutMillisegundos);
-            });
-
-            serviceBuilder.AddHttpMessageHandler<HttpClientLogHandler>();
-
-            serviceBuilder.AddTransientHttpErrorPolicy((builder)
-                => builder.WaitAndRetryAsync(
-                        apiConfiguration.RetryAttemps,
-                        sleepDurationProvider: (i) => TimeSpan.FromMilliseconds(apiConfiguration.RetryAttempsIntervalMilliseconds),
-                        onRetry: (result, timeSpan, retryCount, context) => {
-                            Log.Error(result.Exception, $"Exception logged: {result.Exception?.GetType().Name}. Attempt: {retryCount}");
-                        })
-                   );
-
-            //serviceBuilder.AddTransientHttpErrorPolicy((builder)
-            //    => builder.CircuitBreakerAsync(3, TimeSpan.FromSeconds(30)));
-
-        }
     }
 }
