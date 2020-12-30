@@ -1,11 +1,6 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace SamplePollyRefit
@@ -41,7 +36,7 @@ namespace SamplePollyRefit
                         .Enrich.FromLogContext()
                         .ReadFrom.AppSettings()
                         .WriteTo.Console()
-                        .WriteTo.File(@"c:\Log\HeroApiSample\log-.log", rollingInterval: RollingInterval.Day)
+                        .WriteTo.File(@"c:\Log\SamplePollyRefit\log-.log", rollingInterval: RollingInterval.Day)
                         .CreateLogger();
                 })
                 .UseSerilog();

@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text.Json;
+using Newtonsoft.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SamplePollyRefit
+namespace SamplePollyRefit.Services.Handlers
 {
     public class HttpClientLogHandler : DelegatingHandler
     {
@@ -31,11 +31,12 @@ namespace SamplePollyRefit
         {
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             request.Headers.Add("Connection", "keep-alive");
-            //request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
+            request.Headers.Add("User-Agent", "request");
+            request.Headers.Add("Accept-Encoding", "gzip, deflate, br");
         }
 
         private async void LogRequest(HttpRequestMessage request)
-            => _logger.LogInformation("Efetuando request para {url} {headers} {body}", request.RequestUri, JsonSerializer.Serialize(request.Headers),
+            => _logger.LogInformation("Efetuando request para {url} {headers} {body}", request.RequestUri, JsonConvert.SerializeObject(request.Headers),
                 request.Content != null ? await request.Content.ReadAsStringAsync() : string.Empty);
 
         private async void LogResponse(HttpRequestMessage request, HttpResponseMessage response)
