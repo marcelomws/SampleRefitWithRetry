@@ -32,7 +32,7 @@ jobs:
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build :latest
-      run: docker build .src/ -f src/SamplePollyRefit/Dockerfile -t marcelomws/sample-refit:latest
+      run: docker build ./src -f src/SamplePollyRefit/Dockerfile -t marcelomws/sample-refit:latest
 
     - name: Push to docker hub :latest
       uses: actions-hub/docker@master
